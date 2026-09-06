@@ -49,6 +49,14 @@ API keys required**.
 
 </td>
 </tr>
+<tr>
+<td colspan="2">
+
+**A small mascot explains the app on hover** — a thought bubble with a real character-by-character typewriter reveal
+<img src="docs/screenshots/mascot-tooltip.png" alt="Nav bar mascot hovered, showing a thought-bubble tooltip explaining the app">
+
+</td>
+</tr>
 </table>
 
 <a id="engineering-highlights"></a>
