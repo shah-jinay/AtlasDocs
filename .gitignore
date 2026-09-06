@@ -1,0 +1,29 @@
+# Env / secrets
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+
+# Docker / data volumes are named volumes, not bind mounts, so nothing here
+
+# Evaluation output
+evaluation/runs/*.json
+!evaluation/runs/.gitkeep
+
+# Load test output
+load-tests/results/*.json
+!load-tests/results/.gitkeep
+
+# OS
+.DS_Store

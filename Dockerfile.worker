@@ -1,0 +1,17 @@
+# See Dockerfile.api for the multi-stage build rationale. This image runs
+# only app.workers.main -- no uvicorn, no HTTP surface at all -- which is
+# the architectural point: ingestion compute can never contend with the
+# API container because it isn't in it.
+FROM python:3.12-slim AS builder
+WORKDIR /app
+COPY backend/requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+FROM python:3.12-slim AS runtime
+WORKDIR /app
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+COPY backend/app ./app
+RUN useradd --uid 10001 --create-home atlasdocs && chown -R atlasdocs /app
+USER 10001
+CMD ["sh", "-c", "python -m app.bootstrap && python -m app.workers.main"]

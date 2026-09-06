@@ -1,0 +1,19 @@
+# Multi-stage build (blueprint section 18.1): build deps stay in the
+# builder stage, the runtime image only gets the installed wheels and
+# application code, keeping the final image small and low-attack-surface.
+FROM python:3.12-slim AS builder
+WORKDIR /app
+COPY backend/requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+FROM python:3.12-slim AS runtime
+WORKDIR /app
+COPY --from=builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+COPY backend/app ./app
+COPY backend/migrations ./migrations
+COPY backend/alembic.ini .
+RUN useradd --uid 10001 --create-home atlasdocs && chown -R atlasdocs /app
+USER 10001
+EXPOSE 8000
+CMD ["sh", "-c", "alembic upgrade 0001 && python -m app.bootstrap && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

@@ -1,0 +1,25 @@
+# AtlasDocs Sample Policy Document
+
+This is a small fixture document used by the end-to-end acceptance test
+(backend/tests/test_integration_e2e.py) and by the corpus-bootstrap script
+(scripts/ingest_fixture.py).
+
+## Data Retention
+
+All uploaded documents and their derived chunks are retained for a
+retention period of 90 days after the owning account is deleted. Query
+telemetry, including questions and retrieved chunk identifiers, is
+retained separately for 30 days for debugging and evaluation purposes.
+
+## Ingestion Architecture
+
+Document ingestion is handled by an independent worker service that
+consumes jobs from a durable queue. This separation exists so that a
+burst of document uploads does not slow down interactive query latency,
+because the API service never performs parsing or embedding work itself.
+
+## Support
+
+There is no scanned-document OCR pipeline in this version. Image-only
+PDFs are detected during parsing and rejected with a clear error code
+rather than silently producing empty chunks.
