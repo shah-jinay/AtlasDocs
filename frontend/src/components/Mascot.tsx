@@ -8,11 +8,12 @@ const INK = "#3a2a24"; // near-black brown, panda-patch/outline color
 // Also used at a smaller size in the nav bar to explain the app itself.
 // The eye-patch highlights track the cursor anywhere on the page, and the
 // eyes blink on their own -- both run independently of each other.
-export default function Mascot({ tip, size = 52 }: { tip: string; size?: number }) {
+export default function Mascot({ tip, size = 60 }: { tip: string; size?: number }) {
   // Two Mascots can be on screen at once (nav + an empty state), so the
   // gradient needs a per-instance id -- a hardcoded id would duplicate
   // across SVGs and resolve inconsistently across browsers.
   const gradientId = `mascot-gradient-${useId()}`;
+  const clipId = `mascot-face-clip-${useId()}`;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [glint, setGlint] = useState({ x: 0, y: 0 });
 
@@ -37,35 +38,36 @@ export default function Mascot({ tip, size = 52 }: { tip: string; size?: number 
 
   return (
     <div className="mascot-wrap" ref={wrapRef}>
-      <svg className="mascot-face" width={size} height={size} viewBox="0 0 56 56" fill="none" aria-hidden="true">
-        {/* ears, drawn first so the face circle overlaps their inner edge */}
-        <circle cx="14" cy="13" r="7.5" fill={INK} />
-        <circle cx="42" cy="13" r="7.5" fill={INK} />
-        {/* face: a domed top (rounded like a circle) but a flat-ish
-            bottom with just softly rounded corners, rather than a full
-            circle -- reads as "sitting" on a surface. */}
+      <svg className="mascot-face" width={size} height={size * (52 / 64)} viewBox="0 0 64 52" fill="none" aria-hidden="true">
+        {/* ears, drawn first so the face overlaps their lower half. Kept
+            clear of the viewBox edge so they don't get clipped. */}
+        <circle cx="13" cy="9.5" r="8.5" fill={INK} />
+        <circle cx="51" cy="9.5" r="8.5" fill={INK} />
+        {/* face: a plump dumpling body -- rounded sides and a wide belly,
+            with a smooth (not pointed) rounded top. */}
         <path
-          d="M5,33 A23,23 0 0 1 28,10 A23,23 0 0 1 51,33 L51,49 A5,5 0 0 1 46,54 L10,54 A5,5 0 0 1 5,49 Z"
+          d="M8,28 C8,14 18,6 32,6 C46,6 56,14 56,28 C56,44 44,47 32,47 C20,47 8,44 8,28 Z"
           fill={`url(#${gradientId})`}
           stroke={INK}
           strokeWidth="2.25"
           strokeLinejoin="round"
         />
-        {/* blush, peeking out beside the eye patches */}
-        <circle cx="12.5" cy="38" r="3.5" fill="#ff9d8a" opacity="0.6" />
-        <circle cx="43.5" cy="38" r="3.5" fill="#ff9d8a" opacity="0.6" />
+        {/* blush -- clipped to the face oval so the part that would spill
+            past the outline is simply cut off, not floating outside it. */}
+        <g clipPath={`url(#${clipId})`}>
+          <circle cx="10" cy="32" r="5.5" fill="#ff9d8a" opacity="0.75" />
+          <circle cx="54" cy="32" r="5.5" fill="#ff9d8a" opacity="0.75" />
+        </g>
         {/* panda eye patches; the patch blinks, the glint tracks the cursor */}
         <g className="mascot-eyes">
-          <ellipse cx="18.5" cy="28" rx="4.5" ry="5.5" fill={INK} />
-          <ellipse cx="37.5" cy="28" rx="4.5" ry="5.5" fill={INK} />
-          <circle cx={19.5 + glint.x} cy={26 + glint.y} r="1.1" fill="#ffffff" />
-          <circle cx={38.5 + glint.x} cy={26 + glint.y} r="1.1" fill="#ffffff" />
+          <ellipse cx="23" cy="25" rx="4" ry="5" fill={INK} />
+          <ellipse cx="41" cy="25" rx="4" ry="5" fill={INK} />
+          <circle cx={24 + glint.x} cy={23 + glint.y} r="1.1" fill="#ffffff" />
+          <circle cx={42 + glint.x} cy={23 + glint.y} r="1.1" fill="#ffffff" />
         </g>
-        {/* nose */}
-        <ellipse cx="28" cy="38.5" rx="2.2" ry="1.6" fill={INK} />
         {/* small "w" / cat-style mouth */}
         <path
-          d="M22 44c1.2 2 2.8 2 4 0 1.2 2 2.8 2 4 0 1.2 2 2.8 2 4 0"
+          d="M28 35c1.2 2 2.8 2 4 0 1.2 2 2.8 2 4 0"
           stroke={INK}
           strokeWidth="2"
           strokeLinecap="round"
@@ -73,10 +75,13 @@ export default function Mascot({ tip, size = 52 }: { tip: string; size?: number 
           fill="none"
         />
         <defs>
-          <linearGradient id={gradientId} x1="7" y1="10" x2="49" y2="52" gradientUnits="userSpaceOnUse">
+          <linearGradient id={gradientId} x1="8" y1="8" x2="56" y2="44" gradientUnits="userSpaceOnUse">
             <stop stopColor="#fff3ec" />
             <stop offset="1" stopColor="#ffd9c2" />
           </linearGradient>
+          <clipPath id={clipId}>
+            <path d="M8,28 C8,14 18,6 32,6 C46,6 56,14 56,28 C56,44 44,47 32,47 C20,47 8,44 8,28 Z" />
+          </clipPath>
         </defs>
       </svg>
       <div className="mascot-tip" role="tooltip">
