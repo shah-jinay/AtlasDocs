@@ -39,6 +39,10 @@ export async function getDocument(id: string): Promise<DocumentRecord> {
   return request<DocumentRecord>(`/v1/documents/${id}`);
 }
 
+export async function deleteDocument(id: string): Promise<void> {
+  await request<void>(`/v1/documents/${id}`, { method: "DELETE" });
+}
+
 export async function uploadDocument(file: File, onProgress?: (pct: number) => void): Promise<string> {
   const init = await request<UploadInitResponse>("/v1/documents/uploads", {
     method: "POST",

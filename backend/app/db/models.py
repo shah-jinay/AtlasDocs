@@ -28,12 +28,26 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from app.core.config import get_settings
+
 
 class Base(DeclarativeBase):
     pass
 
 
 DOCUMENT_STATUSES = ("UPLOADING", "QUEUED", "PROCESSING", "READY", "FAILED", "DELETED")
+
+# IMPORTANT: pgvector's SQLAlchemy binding strictly validates a Python
+# vector's length against this declared dimension *before* it ever reaches
+# Postgres (pgvector.utils.vector.Vector._to_db raises ValueError on a
+# mismatch) -- so this cannot be a hardcoded literal without silently
+# breaking whichever embedding provider doesn't match it. It's read from
+# Settings.embedding_dimension instead, so it always tracks whichever
+# provider EMBEDDING_PROVIDER currently selects (384 for the zero-config
+# mock provider, 1536 for OpenAI's text-embedding-3-small). The *actual*
+# Postgres column width still has to be migrated separately to match --
+# see migration 0003 and README "Changing the embedding model".
+ACTIVE_EMBEDDING_DIMENSION = get_settings().embedding_dimension
 
 
 class Document(Base):
@@ -77,7 +91,7 @@ class DocumentChunk(Base):
     section_path: Mapped[str | None] = mapped_column(Text)
     token_count: Mapped[int | None] = mapped_column(Integer)
     content_sha256: Mapped[str] = mapped_column(Text, nullable=False)
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(384))
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(ACTIVE_EMBEDDING_DIMENSION))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     document: Mapped["Document"] = relationship(back_populates="chunks")

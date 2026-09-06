@@ -45,8 +45,25 @@ async def get_document(db: AsyncSession, *, document_id: uuid.UUID, owner_id: uu
 
 
 async def list_documents(db: AsyncSession, *, owner_id: uuid.UUID) -> list[Document]:
-    stmt = select(Document).where(Document.owner_id == owner_id).order_by(Document.created_at.desc())
+    stmt = (
+        select(Document)
+        .where(Document.owner_id == owner_id, Document.status != "DELETED")
+        .order_by(Document.created_at.desc())
+    )
     return list((await db.execute(stmt)).scalars().all())
+
+
+async def mark_deleted(db: AsyncSession, *, document_id: uuid.UUID) -> None:
+    """Soft-delete: the row and its chunks stay in place so past
+    query_citations rows (which FK-reference document_chunks) never dangle,
+    but the retrieval query's `d.status = 'READY'` filter already excludes
+    anything not READY -- so this alone is enough to stop a deleted
+    document from ever being retrieved again, with no separate cleanup of
+    document_chunks required.
+    """
+    stmt = update(Document).where(Document.id == document_id).values(status="DELETED")
+    await db.execute(stmt)
+    await db.commit()
 
 
 async def mark_queued(db: AsyncSession, *, document: Document) -> IngestionJob:

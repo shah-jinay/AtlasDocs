@@ -96,3 +96,22 @@ async def get_document(
     if doc is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
     return DocumentResponse.from_model(doc)
+
+
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document(
+    document_id: uuid.UUID, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)
+) -> None:
+    # get_document's owner_id filter is the authorization check here --
+    # a document that exists but belongs to someone else looks identical
+    # to one that doesn't exist at all.
+    doc = await repositories.get_document(db, document_id=document_id, owner_id=user.id)
+    if doc is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+
+    # Best-effort: the object may already be gone (delete_object is
+    # idempotent) or never landed (a document stuck in UPLOADING) -- either
+    # way the DB soft-delete below is what actually makes it disappear from
+    # the user's document list and stop being retrievable.
+    s3.delete_object(key=doc.s3_key)
+    await repositories.mark_deleted(db, document_id=document_id)

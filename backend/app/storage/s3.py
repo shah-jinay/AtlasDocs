@@ -117,3 +117,11 @@ def put_object_bytes(*, key: str, data: bytes, content_type: str) -> None:
     upload path is always the browser PUTting directly to the presigned URL.
     """
     _client().put_object(Bucket=get_settings().s3_bucket, Key=key, Body=data, ContentType=content_type)
+
+
+def delete_object(*, key: str) -> None:
+    """S3 delete_object is idempotent -- deleting an already-gone or
+    never-uploaded key is not an error, so callers (document deletion)
+    don't need to check existence first.
+    """
+    _client().delete_object(Bucket=get_settings().s3_bucket, Key=key)

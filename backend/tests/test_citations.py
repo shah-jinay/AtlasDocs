@@ -1,6 +1,6 @@
 import uuid
 
-from app.rag.citations import validate_citations
+from app.rag.citations import is_evidence_insufficient, validate_citations
 from app.rag.generation import CitationClaim
 from app.rag.prompt import SourceBlock
 from app.rag.retrieval import RetrievedChunk
@@ -72,3 +72,29 @@ def test_excerpt_is_truncated_with_ellipsis_when_long():
     result = validate_citations([CitationClaim(source_id="S1", claim="c")], sources)
     assert result[0].excerpt.endswith("...")
     assert len(result[0].excerpt) <= 403
+
+
+def test_evidence_sufficient_with_a_validated_citation():
+    sources = [_source("S1")]
+    validated = validate_citations([CitationClaim(source_id="S1", claim="c")], sources)
+    assert not is_evidence_insufficient(retrieved_count=1, validated=validated, provider_flag=False)
+
+
+def test_evidence_insufficient_when_nothing_was_retrieved():
+    assert is_evidence_insufficient(retrieved_count=0, validated=[], provider_flag=False)
+
+
+def test_evidence_insufficient_when_model_abstains_with_prose_but_no_citations():
+    """Regression test: a real LLM correctly abstaining by writing a full
+    explanatory sentence with zero citations must still be flagged as
+    insufficient evidence -- the provider's own self-reported flag isn't
+    trustworthy enough to rely on alone (this is exactly what a real
+    Claude response looked like when this bug was found).
+    """
+    assert is_evidence_insufficient(retrieved_count=3, validated=[], provider_flag=False)
+
+
+def test_evidence_insufficient_when_provider_flag_is_set_even_with_citations():
+    sources = [_source("S1")]
+    validated = validate_citations([CitationClaim(source_id="S1", claim="c")], sources)
+    assert is_evidence_insufficient(retrieved_count=1, validated=validated, provider_flag=True)

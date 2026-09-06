@@ -58,3 +58,18 @@ def validate_citations(
             )
         )
     return validated
+
+
+def is_evidence_insufficient(
+    *, retrieved_count: int, validated: list[ValidatedCitation], provider_flag: bool
+) -> bool:
+    """The authoritative "not enough evidence" signal for the API response
+    (blueprint section 13.3 step 5) -- not just whatever the raw LLM
+    response happened to claim. A real model can (correctly) abstain by
+    writing a full explanatory sentence with zero citations; relying only
+    on the provider's self-reported flag would miss that. This treats "no
+    validated citation backs the answer" as sufficient on its own,
+    regardless of provider or answer text, then ORs in the provider's own
+    flag as a secondary signal.
+    """
+    return provider_flag or retrieved_count == 0 or not validated

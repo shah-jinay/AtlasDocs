@@ -45,7 +45,11 @@ def _wait_for_ready(client: httpx.Client, document_id: str, timeout_s: float = 6
 
 @pytest.fixture(scope="module")
 def client() -> httpx.Client:
-    with httpx.Client(base_url=API_BASE, timeout=30.0) as c:
+    # 60s, not 30s: a real generation provider (GENERATION_PROVIDER=anthropic/
+    # openai) can genuinely take 15-25s+ per call, especially for a longer
+    # synthesized answer -- the mock provider is instant, but this timeout
+    # has to tolerate whichever provider is actually configured.
+    with httpx.Client(base_url=API_BASE, timeout=60.0) as c:
         yield c
 
 
@@ -127,3 +131,37 @@ def test_duplicate_complete_call_is_idempotent(client: httpx.Client):
     first.raise_for_status()
     second.raise_for_status()
     assert first.json()["job_id"] == second.json()["job_id"]
+
+
+def test_deleted_document_disappears_from_list(client: httpx.Client):
+    document_id = _upload_fixture(client)
+    _wait_for_ready(client, document_id)
+
+    listing = client.get("/v1/documents", headers=_headers())
+    listing.raise_for_status()
+    assert any(d["document_id"] == document_id for d in listing.json())
+
+    delete_resp = client.delete(f"/v1/documents/{document_id}", headers=_headers())
+    assert delete_resp.status_code == 204
+
+    listing_after = client.get("/v1/documents", headers=_headers())
+    listing_after.raise_for_status()
+    assert not any(d["document_id"] == document_id for d in listing_after.json())
+
+
+def test_deleting_someone_elses_document_is_not_found(client: httpx.Client):
+    document_id = _upload_fixture(client)
+    _wait_for_ready(client, document_id)
+
+    other_user_headers = {"Authorization": "Bearer dev-key-bob"}
+    resp = client.delete(f"/v1/documents/{document_id}", headers=other_user_headers)
+    assert resp.status_code == 404
+
+    # Still there for the actual owner -- bob's attempt didn't delete it.
+    still_there = client.get(f"/v1/documents/{document_id}", headers=_headers())
+    assert still_there.status_code == 200
+
+
+def test_deleting_unknown_document_is_not_found(client: httpx.Client):
+    resp = client.delete("/v1/documents/00000000-0000-0000-0000-000000000000", headers=_headers())
+    assert resp.status_code == 404

@@ -142,7 +142,9 @@ def _summarize(name: str, results: list[RequestResult], queue_depths: list[int])
 
 async def run(args: argparse.Namespace) -> None:
     headers = {"Authorization": f"Bearer {args.api_key}"}
-    async with httpx.AsyncClient(base_url=args.api_base, timeout=30.0) as client:
+    # 60s: a real generation provider can take 15-25s+ per call; the mock
+    # provider is instant, but this has to tolerate whichever is configured.
+    async with httpx.AsyncClient(base_url=args.api_base, timeout=60.0) as client:
         print(f"Warming up for {args.warmup}s...")
         await _query_workload(client, headers, duration_s=args.warmup, qps=args.qps)
 

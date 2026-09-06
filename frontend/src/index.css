@@ -1,136 +1,780 @@
+/* AtlasDocs design system -- a Linear/Raycast-inspired vibrant glass look:
+   a near-black canvas lit by a soft violet/pink/blue gradient glow,
+   frosted glassmorphism panels, gradient CTA buttons, and gradient-filled
+   headline text. */
+
 :root {
-  color-scheme: light dark;
-  --bg: #0b0f14;
-  --panel: #131a22;
-  --border: #24303b;
-  --text: #e6edf3;
-  --muted: #8b9aa8;
-  --accent: #4f9dff;
-  --danger: #ff6b6b;
-  --success: #4fd18b;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+
+  --bg: #0d0d12;
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel-hover: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --text: #f5f5f7;
+  --text-dim: #c7c7cf;
+  --muted: #8e8e96;
+
+  --accent: #8b5cf6;
+  --accent-2: #ec4899;
+  --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #9d70ff 0%, #f25fa8 100%);
+  --accent-text: #ffffff;
+  --accent-soft: rgba(139, 92, 246, 0.14);
+  --accent-ring: rgba(139, 92, 246, 0.45);
+
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.14);
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.14);
+
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --blur: blur(24px);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 900px 600px at 12% -8%, rgba(139, 92, 246, 0.32), transparent 60%),
+    radial-gradient(ellipse 800px 550px at 88% 4%, rgba(236, 72, 153, 0.22), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 50% 105%, rgba(59, 130, 246, 0.16), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
 }
 
 .app {
-  max-width: 960px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 24px 24px 80px;
 }
+
+/* ---------- Nav (frosted, sticky) ---------- */
 
 nav.top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
+  gap: 28px;
+  margin: 0 auto 40px;
+  max-width: 880px;
+  padding: 14px 20px;
+  background: rgba(20, 18, 28, 0.55);
+  backdrop-filter: var(--blur) saturate(160%);
+  -webkit-backdrop-filter: var(--blur) saturate(160%);
+  border: 1px solid var(--border);
+  border-radius: 980px;
+  position: sticky;
+  top: 16px;
+  z-index: 10;
 }
 
-nav.top a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 14px;
-}
-
-nav.top a.active, nav.top a:hover {
-  color: var(--text);
-}
-
-nav.top .brand {
+.brand {
+  display: flex;
+  align-items: center;
   font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
   color: var(--text);
-  margin-right: auto;
 }
 
-select, input[type="text"], textarea {
-  background: var(--panel);
+/* Outlined pill nav items (reference: Tapsi's "Solutions / About Us /
+   Blog" nav treatment) instead of plain underlined text links. */
+nav.top a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 980px;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+nav.top a:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+nav.top a.active {
+  color: var(--text);
+  border-color: transparent;
+  background: var(--accent-gradient);
+}
+
+/* Custom dropdown (components/UserSwitcher.tsx) -- a native <select>'s
+   open menu is OS-rendered and can't be themed, so this is a button +
+   positioned list instead, fully styled to match the glass UI. */
+.user-switcher-wrap {
+  position: relative;
+}
+
+.user-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
+  border-radius: 980px;
+  padding: 7px 14px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.user-switcher svg {
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.user-switcher[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.user-switcher:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+  box-shadow: none;
+}
+
+.user-switcher:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+.user-switcher-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 140px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: rgba(28, 22, 38, 0.9);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+  animation: fade-in-up 0.15s ease both;
+}
+
+.user-switcher-menu li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.user-switcher-menu li:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.user-switcher-menu li.selected {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.user-switcher-menu li.selected svg {
+  color: var(--accent);
+}
+
+/* ---------- Typography ---------- */
+
+h1, h2, h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Small bracketed "eyebrow" label above a page title (reference: Tapsi's
+   "[ Service Features ]" tag) -- a recurring designed detail rather than
+   a plain heading with nothing above it. */
+.eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.eyebrow::before {
+  content: "[ ";
+}
+
+.eyebrow::after {
+  content: " ]";
+}
+
+.page-title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  margin: 0 0 32px;
+  color: var(--text);
+}
+
+label {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+/* ---------- Form controls ---------- */
+
+input[type="text"],
+textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+input[type="text"]::placeholder {
+  color: var(--muted);
 }
 
 button {
-  background: var(--accent);
+  background: var(--accent-gradient);
   border: none;
-  color: white;
-  border-radius: 6px;
-  padding: 8px 14px;
+  color: var(--accent-text);
+  border-radius: var(--radius-sm);
+  padding: 11px 20px;
+  font-family: var(--font-body);
   font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   cursor: pointer;
+  transition: filter 0.15s ease, transform 0.12s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 18px -6px rgba(139, 92, 246, 0.5);
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px -6px rgba(139, 92, 246, 0.65);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 button.secondary {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-strong);
   color: var(--text);
+  box-shadow: none;
 }
+
+button.secondary:hover:not(:disabled) {
+  background: var(--panel-hover);
+  filter: none;
+}
+
+/* Low-emphasis text link */
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+  transform: none;
+  box-shadow: none;
+}
+
+.link-button.danger {
+  color: var(--danger);
+}
+
+/* Custom checkbox pill (document selector on /ask) */
+
+.doc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 980px;
+  padding: 7px 14px 7px 10px;
+  font-size: 13.5px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.doc-toggle:hover {
+  border-color: var(--border-strong);
+  background: var(--panel-hover);
+}
+
+.doc-toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 5px;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.doc-toggle input[type="checkbox"]::before {
+  content: "";
+  width: 15px;
+  height: 15px;
+  border-radius: 5px;
+  transform: scale(0);
+  transition: transform 0.12s ease;
+  background: var(--accent-gradient);
+  margin: -1.5px;
+}
+
+.doc-toggle input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.doc-toggle input[type="checkbox"]:checked {
+  border-color: transparent;
+}
+
+/* ---------- Glass panels ---------- */
 
 .card {
   background: var(--panel);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border-top-color: rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  padding: 26px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.5);
 }
 
 .doc-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+  background: var(--panel);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-top-color: rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+}
+
+.doc-row:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -12px rgba(139, 92, 246, 0.35);
+}
+
+.doc-row .doc-name {
+  font-size: 15.5px;
+  font-weight: 600;
 }
 
 .doc-meta {
   color: var(--muted);
   font-size: 13px;
+  margin-top: 3px;
 }
+
+/* ---------- Status pills ---------- */
 
 .status-pill {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 980px;
   border: 1px solid var(--border);
+  white-space: nowrap;
 }
 
-.status-READY { color: var(--success); border-color: var(--success); }
-.status-FAILED { color: var(--danger); border-color: var(--danger); }
-.status-QUEUED, .status-PROCESSING, .status-UPLOADING { color: var(--accent); border-color: var(--accent); }
+.status-READY {
+  color: var(--success);
+  border-color: rgba(52, 211, 153, 0.4);
+  background: var(--success-soft);
+}
+
+.status-FAILED {
+  color: var(--danger);
+  border-color: rgba(251, 113, 133, 0.4);
+  background: var(--danger-soft);
+}
+
+.status-QUEUED,
+.status-PROCESSING,
+.status-UPLOADING {
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.4);
+  background: var(--accent-soft);
+}
+
+.status-pill.pulsing::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 5px;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+/* ---------- Upload dropzone ---------- */
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 48px 20px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropzone .dz-icon {
+  color: var(--muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.dropzone:hover .dz-icon {
+  transform: translateY(-2px);
+}
+
+.dropzone.dragover .dz-icon {
+  color: var(--accent);
+}
+
+.dropzone .dz-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dropzone .dz-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.progress-track {
+  height: 5px;
+  border-radius: 980px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-gradient);
+  transition: width 0.2s ease;
+}
+
+/* ---------- Citations ---------- */
+
+.answer-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text);
+}
 
 .citation-chip {
-  display: inline-block;
-  background: var(--accent);
-  color: white;
-  border-radius: 4px;
-  font-size: 11px;
-  padding: 1px 6px;
-  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--accent-gradient);
+  color: var(--accent-text);
+  border-radius: 980px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 3px;
   cursor: pointer;
   vertical-align: super;
+  transition: filter 0.15s ease;
+}
+
+.citation-chip:hover {
+  filter: brightness(1.15);
 }
 
 .citation-panel {
-  border-left: 3px solid var(--accent);
-  padding: 10px 14px;
-  margin-top: 8px;
-  background: rgba(79, 157, 255, 0.08);
-  border-radius: 0 8px 8px 0;
+  /* Solid (not a gradient border-image) so DocumentDetailPage can still
+     override it to var(--danger) for the FAILED-document error panel via
+     an inline borderLeftColor style. */
+  border-left: 2px solid var(--accent);
+  padding: 12px 16px;
+  margin-top: 12px;
+  background: rgba(139, 92, 246, 0.08);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  animation: fade-in-up 0.25s ease both;
 }
 
-.muted { color: var(--muted); }
-.mt-16 { margin-top: 16px; }
-.error-text { color: var(--danger); font-size: 13px; }
+.citation-panel .cp-source {
+  font-weight: 600;
+  color: var(--text-dim);
+  font-size: 13.5px;
+}
+
+.sources-line {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- Icon button (e.g. remove document) ---------- */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--muted);
+  opacity: 0;
+  box-shadow: none;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.doc-row:hover .icon-button {
+  opacity: 1;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+  filter: none;
+  transform: none;
+}
+
+.icon-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* ---------- Spinner ---------- */
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+.spinner-on-accent {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-in {
+  animation: fade-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-enter {
+  animation: fade-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---------- Mascot (empty-state helper) ---------- */
+
+.mascot-wrap {
+  position: relative;
+  display: inline-flex;
+  cursor: default;
+}
+
+.mascot-face {
+  animation: mascot-bob 3s ease-in-out infinite;
+  filter: drop-shadow(0 6px 16px rgba(217, 119, 87, 0.35));
+}
+
+.mascot-eyes {
+  transform-origin: center;
+  animation: mascot-blink 4.5s ease-in-out infinite;
+}
+
+.mascot-wrap:hover .mascot-face {
+  animation-play-state: paused;
+  transform: translateY(-2px) scale(1.05);
+}
+
+@keyframes mascot-bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes mascot-blink {
+  0%, 92%, 100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+.mascot-tip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  background: rgba(28, 22, 38, 0.95);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 980px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mascot-tip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(28, 22, 38, 0.95);
+}
+
+.mascot-wrap:hover .mascot-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

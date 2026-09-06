@@ -5,6 +5,7 @@ context packing, citation-constrained generation, and backend citation
 validation -- then persists query telemetry (section 7.1) so
 evaluation/run_eval.py and the load test have real numbers to read back.
 """
+import asyncio
 import logging
 import time
 import uuid
@@ -19,7 +20,7 @@ from app.core.security import User, current_user, hash_for_logs
 from app.db import repositories
 from app.db.models import Document
 from app.db.session import get_db
-from app.rag.citations import validate_citations
+from app.rag.citations import is_evidence_insufficient, validate_citations
 from app.rag.embeddings import get_embedding_provider
 from app.rag.generation import SYSTEM_PROMPT, get_generation_provider
 from app.rag.prompt import build_context, build_user_message
@@ -40,7 +41,12 @@ async def ask_question(
     top_k = body.top_k or settings.retrieval_top_k
 
     embedding_provider = get_embedding_provider(settings)
-    query_embedding = embedding_provider.embed_query(body.question)
+    # Real provider SDKs (openai, anthropic) make a synchronous, blocking
+    # network call. Run it in a worker thread so one slow embedding/
+    # generation call can't stall FastAPI's single event loop and every
+    # other concurrent request with it -- this is exactly the failure mode
+    # that would quietly undermine "query latency stays flat" (section 16).
+    query_embedding = await asyncio.to_thread(embedding_provider.embed_query, body.question)
 
     retrieval_start = time.perf_counter()
     candidates = await retrieve_candidates(
@@ -64,7 +70,9 @@ async def ask_question(
 
     generation_provider = get_generation_provider(settings)
     generation_start = time.perf_counter()
-    result = generation_provider.generate(system_prompt=SYSTEM_PROMPT, user_message=user_message)
+    result = await asyncio.to_thread(
+        generation_provider.generate, system_prompt=SYSTEM_PROMPT, user_message=user_message
+    )
     generation_latency_ms = int((time.perf_counter() - generation_start) * 1000)
 
     validated = validate_citations(result.citations, sources)
@@ -124,6 +132,8 @@ async def ask_question(
             for v in validated
         ],
         request_id=uuid.uuid4(),
-        insufficient_evidence=result.insufficient_evidence or not candidates,
+        insufficient_evidence=is_evidence_insufficient(
+            retrieved_count=len(candidates), validated=validated, provider_flag=result.insufficient_evidence
+        ),
         debug_retrieved_chunks=debug_chunks,
     )

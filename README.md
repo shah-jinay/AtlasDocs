@@ -88,6 +88,25 @@ one maps to a specific file, not just a diagram box:
   checked-in evaluation baseline; approximate search is a separate,
   clearly-labeled migration you turn on *after* benchmarking recall
   against it — not a default nobody measured.
+- **A blocking LLM call can't stall the whole API.** `openai`/`anthropic`
+  SDK calls are synchronous; calling them directly inside an async FastAPI
+  route would let one slow request freeze every other concurrent request
+  on the same process. Both calls are offloaded to a worker thread
+  (`asyncio.to_thread`) in [`app/api/query.py`](backend/app/api/query.py)
+  — verified by firing 3 concurrent real-Claude queries and confirming
+  wall-clock time matched the slowest single request, not their sum.
+- **"Not enough evidence" is decided by the backend, not the model's
+  self-report.** A real LLM can correctly abstain by writing a full
+  explanatory sentence with zero citations — trusting only the provider's
+  own flag missed that. [`is_evidence_insufficient`](backend/app/rag/citations.py)
+  treats "no validated citation backs the answer" as the authoritative
+  signal instead.
+- **Deleting a document is a soft-delete, not a row/chunk delete.** Past
+  `query_citations` rows FK-reference `document_chunks`, so hard-deleting
+  chunks a prior answer cited would either violate that constraint or
+  orphan the citation history. Flipping `status` to `DELETED` removes it
+  from listings and retrieval (which already filters on `status = 'READY'`)
+  without touching that history.
 
 <a id="architecture"></a>
 ## 🏗 Architecture
@@ -173,7 +192,7 @@ pipeline is answerable out of the box. Flip either to `openai` /
 
 ```bash
 cd backend && pip install -r requirements-dev.txt && pytest
-#   29 unit tests — chunker, parser, citation validation, generation
+#   33 unit tests — chunker, parser, citation validation, generation
 #   parsing, embedding provider. None of these touch Docker.
 
 docker compose up -d --build
@@ -224,13 +243,23 @@ fixtures/             sample.txt used by tests, eval, and the demo
 <summary><strong>Changing the embedding model</strong></summary>
 
 The embedding dimension is baked into the `document_chunks.embedding`
-column at migration time (`EMBEDDING_DIMENSION=384`, matching the mock
-provider). Switching to a model with a different native dimension (e.g.
-OpenAI's `text-embedding-3-small` at 1536) requires:
+column at migration time, and pgvector's Python binding strictly validates
+a vector's length against the ORM's declared dimension *before* it even
+reaches Postgres — so `app/db/models.py` reads it from
+`Settings.embedding_dimension` rather than hardcoding a number that would
+silently break whichever provider doesn't match it. Switching providers
+still means migrating the actual column width to match:
 
 1. Set `EMBEDDING_PROVIDER=openai`, `EMBEDDING_DIMENSION=1536`, `OPENAI_API_KEY` in `.env`.
-2. Write a new migration changing the `vector(...)` column size (or drop and recreate it in dev).
-3. Re-ingest existing documents — a `processing_version` bump, not an in-place vector rewrite.
+2. Run [`alembic upgrade 0003`](backend/migrations/versions/0003_embedding_dimension_1536.py)
+   — a real, shipped migration that widens the column to 1536 for OpenAI's
+   `text-embedding-3-small`. It's a sibling branch of `0002` (both apply on
+   top of `0001`), not a continuation of it; see the migration's docstring
+   for combining both.
+3. Re-ingest existing documents — existing embeddings can't be cast to a
+   different dimension, so this is a full re-embed, not an in-place
+   rewrite (the migration truncates the chunk/query tables for exactly
+   this reason).
 
 </details>
 
@@ -276,6 +305,8 @@ ready to run:
 | End-to-end upload → parse → chunk → embed → retrieve → answer pipeline | ✅ Implemented, exercised by 4 passing e2e tests |
 | Tenant-isolated vector retrieval | ✅ Implemented — isolation enforced in SQL, not app code |
 | Citation-grounded, backend-validated responses | ✅ Implemented and unit-tested |
+| Real LLM-backed generation (Anthropic Claude) | ✅ Verified end-to-end against the live stack — synthesized, citation-grounded, correctly abstains |
+| Real embedding provider (OpenAI) | ⚠️ Migration + dimension-validation path built and confirmed to apply cleanly; **not exercised with real embeddings yet** (blocked on the configured account's own billing, not the code) |
 | Idempotent, at-least-once-safe ingestion worker | ✅ Implemented and covered by an idempotency test |
 | Evaluation harness (Recall@K, MRR, citation precision/recall) | ✅ Implemented; ships with a **4-question starter dataset** — grow it before quoting a score |
 | Exact-vs-HNSW recall/latency benchmark | 🔲 Migration built and confirmed to apply cleanly; **no benchmark numbers exist yet** |

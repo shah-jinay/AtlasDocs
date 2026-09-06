@@ -15,7 +15,7 @@ export default function DocumentDetailPage() {
   if (!doc) return <p className="muted">Loading…</p>;
 
   return (
-    <div>
+    <div className="page-enter">
       <Link to="/documents" className="muted">
         ← Back to documents
       </Link>
@@ -33,7 +33,10 @@ export default function DocumentDetailPage() {
           </tbody>
         </table>
         {doc.status === "FAILED" && (
-          <div className="citation-panel mt-16" style={{ borderLeftColor: "var(--danger)" }}>
+          <div
+            className="citation-panel mt-16"
+            style={{ borderLeftColor: "var(--danger)", background: "var(--danger-soft)" }}
+          >
             <strong className="error-text">{doc.error_code}</strong>
             <p style={{ marginBottom: 0 }}>{doc.error_message}</p>
           </div>

@@ -99,7 +99,9 @@ async def run(args: argparse.Namespace) -> None:
     cases = load_dataset(Path(args.dataset))
     accumulator = MetricsAccumulator()
 
-    with httpx.Client(base_url=args.api_base, timeout=30.0) as client:
+    # 60s: a real generation provider can take 15-25s+ per call; the mock
+    # provider is instant, but this has to tolerate whichever is configured.
+    with httpx.Client(base_url=args.api_base, timeout=60.0) as client:
         headers = {"Authorization": f"Bearer {args.api_key}"}
         for case in cases:
             resolved = await resolve_relevant(args.owner_email, case.get("relevant", []))

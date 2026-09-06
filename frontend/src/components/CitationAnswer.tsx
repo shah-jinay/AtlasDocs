@@ -18,7 +18,7 @@ export default function CitationAnswer({
 
   return (
     <div>
-      <p style={{ whiteSpace: "pre-wrap" }}>
+      <p className="answer-text" style={{ whiteSpace: "pre-wrap" }}>
         {answer}
         {citations.map((_, i) => (
           <span key={i} className="citation-chip" onClick={() => setOpenIndex(openIndex === i ? null : i)}>
@@ -28,22 +28,24 @@ export default function CitationAnswer({
       </p>
 
       {insufficientEvidence && (
-        <p className="muted">AtlasDocs abstained rather than answer without sufficient grounded evidence.</p>
+        <p className="muted" style={{ fontSize: 13.5 }}>
+          AtlasDocs abstained rather than answer without sufficient grounded evidence.
+        </p>
       )}
 
       {openIndex !== null && citations[openIndex] && (
         <div className="citation-panel">
-          <div className="doc-meta">
-            <strong>{citations[openIndex].filename}</strong>
+          <div className="cp-source">
+            {citations[openIndex].filename}
             {citations[openIndex].page_start != null && ` · page ${citations[openIndex].page_start}`}
           </div>
-          <p style={{ marginBottom: 0 }}>{citations[openIndex].excerpt}</p>
+          <p style={{ marginBottom: 0, marginTop: 6, fontSize: 14 }}>{citations[openIndex].excerpt}</p>
         </div>
       )}
 
       {citations.length > 0 && (
         <div className="mt-16">
-          <span className="muted" style={{ fontSize: 12 }}>
+          <span className="sources-line">
             Sources: {citations.map((c, i) => `[${i + 1}] ${c.filename}`).join("  ")}
           </span>
         </div>
