@@ -39,13 +39,13 @@ API keys required**.
 <td width="50%">
 
 **Ask a question, get a validated citation**
-<img src="docs/screenshots/ask-citation-open.png" alt="Ask page showing an answer with an expanded, validated citation panel">
+<img src="docs/screenshots/ask-citation-open.png?v=2" alt="Ask page showing an answer with an expanded, validated citation panel">
 
 </td>
 <td width="50%">
 
 **Track ingestion status per document**
-<img src="docs/screenshots/documents.png" alt="Documents page showing a fixture file that reached READY status">
+<img src="docs/screenshots/documents.png?v=2" alt="Documents page showing a fixture file that reached READY status">
 
 </td>
 </tr>
