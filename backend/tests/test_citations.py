@@ -6,11 +6,11 @@ from app.rag.prompt import SourceBlock
 from app.rag.retrieval import RetrievedChunk
 
 
-def _source(source_id: str) -> SourceBlock:
+def _source(source_id: str, content: str = "Some retrieved passage text.") -> SourceBlock:
     chunk = RetrievedChunk(
         chunk_id=uuid.uuid4(),
         document_id=uuid.uuid4(),
-        content="Some retrieved passage text.",
+        content=content,
         page_start=1,
         page_end=1,
         section_path=None,
@@ -58,3 +58,17 @@ def test_mixed_valid_and_invalid_citations():
         [CitationClaim(source_id="S1", claim="ok"), CitationClaim(source_id="S7", claim="bad")], sources
     )
     assert [c.source_id for c in result] == ["S1"]
+
+
+def test_excerpt_is_untouched_when_short():
+    sources = [_source("S1", content="A short excerpt.")]
+    result = validate_citations([CitationClaim(source_id="S1", claim="c")], sources)
+    assert result[0].excerpt == "A short excerpt."
+
+
+def test_excerpt_is_truncated_with_ellipsis_when_long():
+    long_content = "word " * 200  # far more than 400 chars
+    sources = [_source("S1", content=long_content)]
+    result = validate_citations([CitationClaim(source_id="S1", claim="c")], sources)
+    assert result[0].excerpt.endswith("...")
+    assert len(result[0].excerpt) <= 403

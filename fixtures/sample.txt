@@ -1,8 +1,4 @@
-# AtlasDocs Sample Policy Document
-
-This is a small fixture document used by the end-to-end acceptance test
-(backend/tests/test_integration_e2e.py) and by the corpus-bootstrap script
-(scripts/ingest_fixture.py).
+# AtlasDocs Data Handling Policy
 
 ## Data Retention
 
@@ -18,7 +14,7 @@ consumes jobs from a durable queue. This separation exists so that a
 burst of document uploads does not slow down interactive query latency,
 because the API service never performs parsing or embedding work itself.
 
-## Support
+## Scanned Document Support
 
 There is no scanned-document OCR pipeline in this version. Image-only
 PDFs are detected during parsing and rejected with a clear error code

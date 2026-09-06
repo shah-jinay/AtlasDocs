@@ -12,6 +12,22 @@ def test_mock_provider_answers_from_top_source():
     assert not result.insufficient_evidence
 
 
+def test_mock_provider_appends_ellipsis_only_when_truncated():
+    """Regression test: the excerpt must be marked with "..." exactly when
+    it was actually cut off at 400 chars, not the other way around.
+    """
+    short_text = "A short passage that fits well within the limit."
+    context_short = f"[SOURCE S1]\nfilename: a.pdf\npage: 1\nchunk_id: x\ntext: {short_text}\n"
+    result_short = MockGenerationProvider().generate(system_prompt="", user_message=context_short)
+    assert result_short.answer.endswith(short_text)
+    assert not result_short.answer.endswith("...")
+
+    long_text = "word " * 200  # far more than 400 characters
+    context_long = f"[SOURCE S1]\nfilename: a.pdf\npage: 1\nchunk_id: x\ntext: {long_text}\n"
+    result_long = MockGenerationProvider().generate(system_prompt="", user_message=context_long)
+    assert result_long.answer.endswith("...")
+
+
 def test_mock_provider_abstains_with_no_sources():
     result = MockGenerationProvider().generate(system_prompt="", user_message="Question: q")
     assert result.insufficient_evidence

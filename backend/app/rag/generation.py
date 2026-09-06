@@ -57,11 +57,11 @@ class MockGenerationProvider:
                 answer=INSUFFICIENT_EVIDENCE_MESSAGE, citations=[], insufficient_evidence=True
             )
         top_id, top_text = matches[0]
-        excerpt = " ".join(top_text.split())[:400]
-        answer = (
-            f"Based on the most relevant retrieved passage ({top_id}): {excerpt}"
-            if len(excerpt) < len(" ".join(top_text.split()))
-            else f"Based on the most relevant retrieved passage ({top_id}): {excerpt}..."
+        full_text = " ".join(top_text.split())
+        excerpt = full_text[:400]
+        was_truncated = len(excerpt) < len(full_text)
+        answer = f"Based on the most relevant retrieved passage ({top_id}): {excerpt}" + (
+            "..." if was_truncated else ""
         )
         return GenerationResult(
             answer=answer,

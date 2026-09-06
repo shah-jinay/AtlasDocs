@@ -11,6 +11,12 @@ from dataclasses import dataclass
 from app.rag.generation import CitationClaim
 from app.rag.prompt import SourceBlock
 
+_EXCERPT_MAX_CHARS = 400
+
+
+def _truncate(text: str, max_chars: int) -> str:
+    return text if len(text) <= max_chars else text[:max_chars].rstrip() + "..."
+
 
 @dataclass(frozen=True)
 class ValidatedCitation:
@@ -47,7 +53,7 @@ def validate_citations(
                 filename=block.filename,
                 page_start=block.chunk.page_start,
                 page_end=block.chunk.page_end,
-                excerpt=block.chunk.content[:400],
+                excerpt=_truncate(block.chunk.content, _EXCERPT_MAX_CHARS),
                 claim=citation.claim,
             )
         )

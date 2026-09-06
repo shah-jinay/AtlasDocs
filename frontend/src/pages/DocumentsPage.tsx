@@ -54,7 +54,9 @@ export default function DocumentsPage() {
             <div>
               <div>{doc.filename}</div>
               <div className="doc-meta">
-                {doc.chunk_count != null ? `${doc.chunk_count} chunks` : doc.mime_type}
+                {doc.chunk_count != null
+                  ? `${doc.chunk_count} chunk${doc.chunk_count === 1 ? "" : "s"}`
+                  : doc.mime_type}
                 {doc.error_code && <span className="error-text"> · {doc.error_code}</span>}
               </div>
             </div>
