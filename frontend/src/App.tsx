@@ -11,7 +11,8 @@ export default function App() {
       <nav className="top">
         <span className="brand">AtlasDocs</span>
         <Mascot
-          size={26}
+          size={38}
+          static
           tip="A multi-tenant RAG app: upload documents, ask questions, get answers grounded in your own files"
         />
         <NavLink

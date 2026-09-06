@@ -64,7 +64,7 @@ body {
 nav.top {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 14px;
   margin: 0 auto 40px;
   max-width: 880px;
   padding: 14px 20px;
@@ -707,9 +707,74 @@ button.secondary:hover:not(:disabled) {
   cursor: default;
 }
 
+/* Reserves the horizontal gap the (absolutely-positioned) nav mascot
+   sits in, so "Documents/Ask/alice" don't shift left into its space. */
+/* Nav bar variant: sits fixed against the bottom of the bar instead of
+   floating/bobbing mid-height. */
+.mascot-wrap--static {
+  align-self: flex-end;
+  /* nav.top has its own vertical padding and a 1px border. Landing
+     exactly on that border (rather than past it) leaves a hard seam
+     where the border shows through the mascot's edge -- push it a
+     couple px further so the mascot's own shape fully covers the
+     border segment behind it instead of exactly coinciding with it. */
+  position: relative;
+  top: 2px;
+  z-index: 1;
+}
+
+.mascot-wrap--static .mascot-face {
+  animation: none;
+}
+
+/* The nav mascot sits right at the top of the viewport (nav.top is
+   sticky at top:16px) and close to the page's left edge, so the default
+   "pop up above, centered" tooltip has nowhere to go above (clipped by
+   the browser window's top edge) and can overflow off the left edge when
+   centered -- flip it to open downward and anchor its left edge to the
+   mascot instead, growing rightward, dots included. */
+.mascot-wrap--static .mascot-tip {
+  bottom: auto;
+  top: calc(100% + 20px);
+  left: 0;
+  transform: scale(0.4);
+  transform-origin: left top;
+}
+
+.mascot-wrap--static .mascot-tip--visible {
+  animation-name: mascot-tip-pop-right;
+}
+
+@keyframes mascot-tip-pop-right {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mascot-wrap--static .mascot-tip-dot-1 {
+  bottom: auto;
+  top: calc(100% + 8px);
+  left: 18px;
+}
+
+.mascot-wrap--static .mascot-tip-dot-2 {
+  bottom: auto;
+  top: calc(100% + 1px);
+  left: 10px;
+}
+
 .mascot-face {
   animation: mascot-bob 3s ease-in-out infinite;
-  filter: drop-shadow(0 6px 16px rgba(217, 119, 87, 0.3));
+  filter: drop-shadow(0 6px 16px rgba(139, 92, 246, 0.3));
 }
 
 .mascot-eyes {
@@ -740,12 +805,27 @@ button.secondary:hover:not(:disabled) {
   }
 }
 
+/* Thought bubble (not a speech-bubble pointer): a rounded cloud shape
+   with two shrinking trail dots leading back down to the mascot, popped
+   in with an overshoot scale, its message typed out character-by-
+   character (see components/Mascot.tsx) rather than appearing all at
+   once. Visibility is driven by React state (hovered), not :hover, so the
+   same class also gates the typing animation restarting correctly. */
 .mascot-tip {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 20px);
   left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  white-space: nowrap;
+  transform: translateX(-50%) scale(0.4);
+  transform-origin: center bottom;
+  /* Wraps at a fixed max-width rather than staying single-line -- a long
+     tip as one unbroken line could get wide enough to overflow off the
+     edge of the viewport, especially for the nav mascot sitting close to
+     the page's left edge. */
+  width: max-content;
+  max-width: 200px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
   background: rgba(26, 21, 35, 0.95);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -753,24 +833,64 @@ button.secondary:hover:not(:disabled) {
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;
-  padding: 8px 14px;
-  border-radius: 980px;
+  padding: 10px 16px;
+  border-radius: 20px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.mascot-tip::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: rgba(26, 21, 35, 0.95);
-}
-
-.mascot-wrap:hover .mascot-tip {
+.mascot-tip--visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  animation: mascot-tip-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes mascot-tip-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.4);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.mascot-tip-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(26, 21, 35, 0.95);
+  opacity: 0;
+  /* `transform` only handles the constant "center on this spot"
+     correction here; the pop itself uses the standalone `scale`
+     property so the two don't fight over the same CSS property when
+     .mascot-tip-dot--visible (shared by both dots) sets scale but each
+     dot keeps its own `left` offset below. */
+  transform: translateX(-50%);
+  scale: 0.3;
+  transition: opacity 0.15s ease, scale 0.15s ease;
+  pointer-events: none;
+}
+
+.mascot-tip-dot-1 {
+  width: 9px;
+  height: 9px;
+  bottom: calc(100% + 8px);
+  left: calc(50% - 14px);
+}
+
+.mascot-tip-dot-2 {
+  width: 5px;
+  height: 5px;
+  bottom: calc(100% + 1px);
+  left: calc(50% - 22px);
+}
+
+.mascot-tip-dot--visible {
+  opacity: 1;
+  scale: 1;
+  transition-delay: 0.1s;
 }
